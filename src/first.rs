@@ -18,6 +18,7 @@ impl List {
         self.head = Link::More(new_node);
     }
 
+    // peek returns the head of the Linked List without actually removing it
     pub fn peek(&self) -> Option<i32> {
         let result;
         match &self.head {
@@ -30,7 +31,18 @@ impl List {
         };
         result
     }
-    
+
+    pub fn pop(&mut self) -> Option<i32> {
+        match mem::replace(&mut self.head, Link::Empty) {
+            Link::Empty => {
+                None
+            }
+            Link::More(node) => {
+                self.head = node.next;
+                Some(node.elem)
+            }
+        }
+    }
 }
 
 enum Link {
