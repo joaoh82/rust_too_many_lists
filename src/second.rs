@@ -1,23 +1,23 @@
 use std::mem;
 
-pub struct List {
-    head: Link,
+pub struct List<T> {
+    head: Link<T>,
 }
 
 // type aliases
-type Link = Option<Box<Node>>;
+type Link<T> = Option<Box<Node<T>>>;
 
-struct Node {
-    elem: i32,
-    next: Link,
+struct Node<T> {
+    elem: T,
+    next: Link<T>,
 }
 
-impl List {
+impl<T> List<T> {
     pub fn new() -> Self {
         List { head: None }
     }
 
-    pub fn push(&mut self, elem: i32) {
+    pub fn push(&mut self, elem: T) {
         let new_node = Box::new(Node {
             elem: elem,
             next: self.head.take(),
@@ -26,21 +26,7 @@ impl List {
         self.head = Link::Some(new_node);
     }
 
-    // peek returns the head of the Linked List without actually removing it
-    pub fn peek(&self) -> Option<i32> {
-        let result;
-        match &self.head {
-            None => {
-                result = None
-            }
-            Some(node) => {
-                result = Some(node.elem);
-            }
-        };
-        result
-    }
-
-    pub fn pop(&mut self) -> Option<i32> {
+    pub fn pop(&mut self) -> Option<T> {
         self.head.take().map(|node| {
             self.head = node.next;
             node.elem
@@ -48,7 +34,7 @@ impl List {
     }
 }
 
-impl Drop for List {
+impl<T> Drop for List<T> {
     fn drop(&mut self) {
         let mut cur_link = self.head.take();
 
@@ -78,9 +64,6 @@ mod test {
        // Check normal removal
        assert_eq!(list.pop(), Some(3));
        assert_eq!(list.pop(), Some(2));
-
-       // Check peek feature
-       assert_eq!(list.peek(), Some(1));
 
        // Push some more just to make sure nothing is corrupted
        list.push(4);
