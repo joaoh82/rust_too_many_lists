@@ -20,6 +20,41 @@ impl<T> List<T> {
     }
 }
 
+// Iter is generic over *some* lifetime, it doesn't care
+pub struct Iter<'a, T> {
+    next: Option<&'a Node<T>>,
+}
+
+// No lifetime here, List doesn't have any associated lifetimes
+impl<T> List<T> {
+    // We declare a fresh lifetime here for the *exact* borrow that
+    // creates the iter. Now &self needs to be valid as long as the
+    // Iter is around.
+    pub fn iter<'a>(&'a self) -> Iter<'a, T> {
+        Iter {
+            next: self.head.as_deref()
+        }
+    }
+}
+
+// We *do* have a lifetime here, because Iter has one that we need to define
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+
+    // None of this needs to change, handled by the above.
+    // Self continues to be incredibly hype and amazing
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next.map(|node| {
+            // In here we are basically giving the compiler a hint of what the 
+            // generics should be.
+            // In this case ::<&Node<T>, _> says "it should return a &Node<T>,
+            // and I don't know/care about that other type".
+            self.next = node.next.as_ref().map::<&Node<T>, _>(|node| &node);
+            &node.elem
+        })
+    }
+}
+
 impl<T> Iterator for IntoIter<T> {
    type Item = T;
    fn next(&mut self) -> Option<Self::Item> {
@@ -76,6 +111,20 @@ impl<T> Drop for List<T> {
 #[cfg(test)]
 mod test {
     use super::List;
+
+    #[test]
+    fn iter_test() {
+        let mut list = List::new();
+        list.push(1);
+        list.push(2);
+        list.push(3);
+
+        let mut iter = list.iter();
+        assert_eq!(iter.next(), Some(&3));
+        assert_eq!(iter.next(), Some(&2));
+        assert_eq!(iter.next(), Some(&1));
+        assert_eq!(iter.next(), None);
+    }
 
     #[test]
     fn into_iter_test() {
