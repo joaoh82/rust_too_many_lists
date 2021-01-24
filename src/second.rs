@@ -14,12 +14,6 @@ struct Node<T> {
 // useful for trivial wrappers around other types.
 pub struct IntoIter<T> (List<T>);
 
-impl<T> List<T> {
-    pub fn into_iter(self) -> IntoIter<T> {
-        IntoIter(self)
-    }
-}
-
 impl<T> Iterator for IntoIter<T> {
    type Item = T;
    fn next(&mut self) -> Option<Self::Item> {
@@ -31,18 +25,6 @@ impl<T> Iterator for IntoIter<T> {
 // Iter is generic over *some* lifetime, it doesn't care
 pub struct Iter<'a, T> {
     next: Option<&'a Node<T>>,
-}
-
-// No lifetime here, List doesn't have any associated lifetimes
-impl<T> List<T> {
-    // We declare a fresh lifetime here for the *exact* borrow that
-    // creates the iter. Now &self needs to be valid as long as the
-    // Iter is around.
-    pub fn iter<'a>(&'a self) -> Iter<'a, T> {
-        Iter {
-            next: self.head.as_deref()
-        }
-    }
 }
 
 // We *do* have a lifetime here, because Iter has one that we need to define
@@ -65,12 +47,6 @@ impl<'a, T> Iterator for Iter<'a, T> {
 
 pub struct IterMut<'a, T> {
     next: Option<&'a mut Node<T>>,
-}
-
-impl<T> List<T> {
-    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
-        IterMut { next: self.head.as_deref_mut() }
-    }
 }
 
 impl<'a, T> Iterator for IterMut<'a, T> {
@@ -115,6 +91,23 @@ impl<T> List<T> {
         self.head.as_mut().map(|node| {
             &mut node.elem
         })
+    }
+
+    pub fn into_iter(self) -> IntoIter<T> {
+        IntoIter(self)
+    }
+
+    // We declare a fresh lifetime here for the *exact* borrow that
+    // creates the iter. Now &self needs to be valid as long as the
+    // Iter is around.
+    pub fn iter<'a>(&'a self) -> Iter<'a, T> {
+        Iter {
+            next: self.head.as_deref()
+        }
+    }
+
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
+        IterMut { next: self.head.as_deref_mut() }
     }
 }
 
